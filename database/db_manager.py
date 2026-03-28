@@ -7,10 +7,21 @@ Gère les utilisateurs, pointages, départements et configurations
 
 import sqlite3
 import os
+import logging
 from datetime import datetime, date, time, timedelta
 from typing import List, Dict, Optional, Tuple, Any
 import json
 import threading
+
+# Import du module de sécurité
+try:
+    from utils.security import PasswordManager, InputValidator
+    SECURITY_AVAILABLE = True
+except ImportError:
+    SECURITY_AVAILABLE = False
+
+# Logger pour ce module
+logger = logging.getLogger(__name__)
 
 
 class DatabaseManager:
@@ -299,32 +310,63 @@ class DatabaseManager:
     def add_user(self, user_id: int, uid: int, name: str, privilege: int = 0,
                  password: str = None, card: str = None, group_id: int = None,
                  department_id: int = 1) -> bool:
-        """Ajouter un utilisateur"""
+        """Ajouter un utilisateur avec hachage sécurisé du mot de passe"""
         try:
+            # Valider les entrées
+            if SECURITY_AVAILABLE:
+                is_valid, error = InputValidator.validate_user_id(user_id)
+                if not is_valid:
+                    logger.warning(f"Tentative d'ajout avec ID invalide: {error}")
+                    return False
+                
+                if name:
+                    is_valid, error = InputValidator.validate_name(name, "Nom d'utilisateur")
+                    if not is_valid:
+                        logger.warning(f"Nom invalide: {error}")
+                        return False
+                
+                # Hacher le mot de passe si fourni
+                if password:
+                    password = PasswordManager.hash_password(password)
+            
             cursor = self.conn.cursor()
             cursor.execute('''
                 INSERT INTO users (id, uid, name, privilege, password, card, group_id, department_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (user_id, uid, name, privilege, password, card, group_id, department_id))
             self.conn.commit()
+            logger.info(f"Utilisateur ajouté: ID={user_id}, Nom={name}")
             return True
-        except sqlite3.IntegrityError:
+        except sqlite3.IntegrityError as e:
+            logger.warning(f"Erreur d'intégrité lors de l'ajout de l'utilisateur {user_id}: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Erreur lors de l'ajout de l'utilisateur {user_id}: {e}")
             return False
     
     def update_user(self, user_id: int, name: str = None, privilege: int = None,
                     password: str = None, card: str = None, group_id: int = None,
                     department_id: int = None, is_active: int = None):
-        """Mettre à jour un utilisateur"""
+        """Mettre à jour un utilisateur avec hachage sécurisé du mot de passe"""
         updates = []
         params = []
         
         if name is not None:
+            # Valider le nom
+            if SECURITY_AVAILABLE:
+                is_valid, error = InputValidator.validate_name(name, "Nom d'utilisateur")
+                if not is_valid:
+                    logger.warning(f"Tentative de mise à jour avec nom invalide: {error}")
+                    return
             updates.append("name = ?")
             params.append(name)
         if privilege is not None:
             updates.append("privilege = ?")
             params.append(privilege)
         if password is not None:
+            # Hacher le nouveau mot de passe
+            if SECURITY_AVAILABLE:
+                password = PasswordManager.hash_password(password)
             updates.append("password = ?")
             params.append(password)
         if card is not None:
@@ -343,17 +385,57 @@ class DatabaseManager:
         if updates:
             updates.append("updated_at = CURRENT_TIMESTAMP")
             params.append(user_id)
-            cursor = self.conn.cursor()
-            cursor.execute(f'''
-                UPDATE users SET {', '.join(updates)} WHERE id = ?
-            ''', params)
-            self.conn.commit()
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(f'''
+                    UPDATE users SET {', '.join(updates)} WHERE id = ?
+                ''', params)
+                self.conn.commit()
+                logger.info(f"Utilisateur {user_id} mis à jour")
+            except Exception as e:
+                logger.error(f"Erreur lors de la mise à jour de l'utilisateur {user_id}: {e}")
+    
+    def verify_user_password(self, user_id: int, password: str) -> bool:
+        """
+        Vérifier le mot de passe d'un utilisateur
+        
+        Args:
+            user_id: ID de l'utilisateur
+            password: Mot de passe en clair à vérifier
+            
+        Returns:
+            True si le mot de passe est correct, False sinon
+        """
+        if not SECURITY_AVAILABLE:
+            logger.warning("Module de sécurité non disponible, vérification basique")
+            user = self.get_user(user_id)
+            return user and user.get('password') == password
+        
+        user = self.get_user(user_id)
+        if not user:
+            logger.warning(f"Tentative de vérification pour utilisateur inexistant: {user_id}")
+            return False
+        
+        stored_password = user.get('password')
+        if not stored_password:
+            return False
+        
+        return PasswordManager.verify_password(password, stored_password)
     
     def delete_user(self, user_id: int):
         """Supprimer un utilisateur"""
-        cursor = self.conn.cursor()
-        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
-        self.conn.commit()
+        try:
+            cursor = self.conn.cursor()
+            # Récupérer le nom avant suppression pour le log
+            cursor.execute("SELECT name FROM users WHERE id = ?", (user_id,))
+            row = cursor.fetchone()
+            user_name = row['name'] if row else 'Inconnu'
+            
+            cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+            self.conn.commit()
+            logger.info(f"Utilisateur supprimé: ID={user_id}, Nom={user_name}")
+        except Exception as e:
+            logger.error(f"Erreur lors de la suppression de l'utilisateur {user_id}: {e}")
     
     def get_user(self, user_id: int) -> Optional[Dict]:
         """Récupérer un utilisateur"""
@@ -415,7 +497,18 @@ class DatabaseManager:
         return (row['max_uid'] or 0) + 1
     
     def search_users(self, query: str) -> List[Dict]:
-        """Rechercher des utilisateurs"""
+        """Rechercher des utilisateurs avec validation des entrées"""
+        # Vérifier les injections SQL potentielles
+        if SECURITY_AVAILABLE:
+            is_safe, pattern = InputValidator.detect_sql_injection(query)
+            if not is_safe:
+                logger.warning(f"Tentative d'injection SQL détectée dans la recherche: {pattern}")
+                return []
+        
+        # Nettoyer la requête
+        if SECURITY_AVAILABLE:
+            query = InputValidator.sanitize_string(query, max_length=100)
+        
         cursor = self.conn.cursor()
         cursor.execute('''
             SELECT u.*, d.name as department_name

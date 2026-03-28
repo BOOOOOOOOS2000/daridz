@@ -2,7 +2,7 @@
 
 Application de gestion complète pour pointeuse biométrique ZKTeco iClock 580.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![Python](https://img.shields.io/badge/python-3.8%2B-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
@@ -147,9 +147,51 @@ L'application utilise SQLite avec les tables suivantes :
 
 ## 🔐 Sécurité
 
-- Les mots de passe sont stockés de manière sécurisée
-- La base de données est locale et chiffrée
-- Les connexions réseau sont sécurisées
+### Améliorations de sécurité v1.1.0
+
+- **Hachage des mots de passe**: Utilisation de bcrypt avec 12 rounds pour un hachage sécurisé
+- **Validation des entrées**: Protection contre les injections SQL et validation des données
+- **Logging structuré**: Traçabilité complète des opérations avec rotation des logs
+- **Détection d'injection**: Analyse automatique des entrées suspectes
+
+### Modules de sécurité
+
+#### PasswordManager
+```python
+from utils.security import PasswordManager
+
+# Hacher un mot de passe
+hashed = PasswordManager.hash_password("mon_mot_de_passe")
+
+# Vérifier un mot de passe
+is_valid = PasswordManager.verify_password("mon_mot_de_passe", hashed)
+```
+
+#### InputValidator
+```python
+from utils.security import InputValidator
+
+# Valider une adresse IP
+is_valid, error = InputValidator.validate_ip("192.168.1.201")
+
+# Valider un port
+is_valid, error = InputValidator.validate_port(4370)
+
+# Détecter une injection SQL
+is_safe, pattern = InputValidator.detect_sql_injection(user_input)
+```
+
+### Configuration des logs
+```python
+from utils.logger import init_logging, get_logger
+
+# Initialiser le logging
+init_logging(log_dir="~/.zkteco_manager/logs", level=logging.INFO)
+
+# Obtenir un logger
+logger = get_logger("mon_module")
+logger.info("Opération réussie")
+```
 
 ## 📁 Structure du projet
 
@@ -175,7 +217,12 @@ zkteco-iclock-manager/
 ├── utils/
 │   ├── __init__.py
 │   ├── export.py          # Export Excel/PDF
-│   └── helpers.py         # Fonctions utilitaires
+│   ├── helpers.py         # Fonctions utilitaires
+│   ├── security.py        # Sécurité et hachage (NEW)
+│   └── logger.py          # Logging structuré (NEW)
+├── tests/
+│   ├── __init__.py
+│   └── test_security.py   # Tests unitaires (NEW)
 └── resources/
     └── icon.ico           # Icône de l'application
 ```
@@ -214,6 +261,6 @@ Ce projet est sous licence MIT.
 
 ---
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Auteur**: ZKTeco Manager Team
-**Dernière mise à jour**: 2024
+**Dernière mise à jour**: 2025
