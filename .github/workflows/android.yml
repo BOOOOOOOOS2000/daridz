@@ -26,20 +26,27 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         
-    - name: Install dependencies
-      run: npm install --legacy-peer-deps
+    - name: Install npm dependencies
+      run: npm ci --legacy-peer-deps
       
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
+    - name: Fix AndroidManifest files for AGP 8.x
+      run: |
+        # Remove package attribute from AndroidManifest.xml files (required for AGP 8.x)
+        sed -i '/package=/d' node_modules/react-native-sqlite-storage/platforms/android/src/main/AndroidManifest.xml
+        sed -i '/package=/d' node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml
+        sed -i '/package=/d' node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml
+        
     - name: Build Android APK
       run: |
         cd android
         chmod +x gradlew
-        ./gradlew clean assembleDebug
+        ./gradlew clean assembleDebug --no-daemon
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug
+        name: app-debug.apk
         path: android/app/build/outputs/apk/debug/app-debug.apk
