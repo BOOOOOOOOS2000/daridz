@@ -1,266 +1,68 @@
-# ZKTeco iClock 580 Manager
+# Restaurant App - React Native
 
-Application de gestion complète pour pointeuse biométrique ZKTeco iClock 580.
+Application de prise de commandes pour restaurants, développée en React Native.
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue)
-![Python](https://img.shields.io/badge/python-3.8%2B-green)
-![License](https://img.shields.io/badge/license-MIT-orange)
+## 🍽️ Fonctionnalités
 
-## 📋 Fonctionnalités
+- **Gestion des tables** : 27 tables avec statuts (libre, occupée, commande envoyée)
+- **Menu complet** : 7 catégories (Viande, Pizza, Burger, Entrées chaudes, Entrées froides, Plats enfants, Plats du jour)
+- **Prise de commande** : Sélection d'articles, quantités, notes personnalisées
+- **Panier** : Modification avant validation
+- **Suivi des commandes** : Statuts en temps réel
+- **Administration** : Gestion des plats du jour (protégé par mot de passe)
+- **Mode hors ligne** : Base de données SQLite locale
 
-### Gestion des utilisateurs
-- ✅ Ajouter, modifier, supprimer des utilisateurs
-- ✅ Gestion des privilèges (Utilisateur, Enregistreur, Gestionnaire, Super Admin)
-- ✅ Assignation aux départements
-- ✅ Gestion des cartes de proximité
-- ✅ Synchronisation avec la pointeuse
+## 🏗️ Architecture
 
-### Gestion des empreintes digitales
-- ✅ Visualisation des empreintes enregistrées
-- ✅ Récupération depuis le périphérique
-- ✅ Suppression d'empreintes
+```
+src/
+├── components/       # Composants réutilisables
+├── context/          # Context API pour le state management
+├── database/         # Configuration SQLite
+├── navigation/       # Navigation entre écrans
+├── screens/          # Écrans principaux
+└── utils/            # Utilitaires
+```
 
-### Gestion des pointages
-- ✅ Téléchargement des pointages depuis la pointeuse
-- ✅ Filtrage par date, utilisateur, département
-- ✅ Affichage des types de vérification
-- ✅ Calcul automatique des heures travaillées
-
-### Rapports et statistiques
-- ✅ Rapport de présence journalière
-- ✅ Rapport de présence mensuelle
-- ✅ Rapport des retards et absences
-- ✅ Rapport des heures travaillées
-- ✅ Statistiques globales
-
-### Export
-- ✅ Export Excel (.xlsx)
-- ✅ Export PDF
-- ✅ Export CSV
-
-### Configuration
-- ✅ Gestion des départements
-- ✅ Gestion des horaires de travail
-- ✅ Gestion des jours fériés
-- ✅ Paramètres de connexion
-- ✅ Synchronisation automatique
-
-## 🔧 Installation
-
-### Prérequis
-- Python 3.8 ou supérieur
-- Windows 7/8/10/11
-
-### Installation depuis les sources
+## 🚀 Installation
 
 ```bash
-# Cloner ou extraire le projet
-cd zkteco-iclock-manager
-
-# Créer un environnement virtuel
-python -m venv venv
-
-# Activer l'environnement virtuel
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
 # Installer les dépendances
-pip install -r requirements.txt
+npm install
 
-# Lancer l'application
-python main.py
+# Lancer le serveur Metro
+npm start
+
+# Construire et lancer sur Android
+npm run android
 ```
 
-### Création de l'exécutable (.exe)
+## 🔧 Configuration
 
-```bash
-# Exécuter le script de compilation
-python build_exe.py
+### Mot de passe administrateur
+Le mot de passe par défaut est : `admin123`
 
-# Ou sous Windows:
-build.bat
-```
+### Base de données
+L'application utilise SQLite pour stocker :
+- Tables du restaurant
+- Catégories et articles du menu
+- Commandes en cours
+- Plats du jour
 
-L'exécutable sera créé dans le dossier `dist/`.
+## 📱 Écrans
 
-## ⚙️ Configuration
+1. **Tables** - Grille des 27 tables avec codes couleurs
+2. **Menu** - Catégories et articles
+3. **Commandes** - Liste des commandes actives
+4. **Admin** - Gestion des plats du jour
 
-### Connexion à la pointeuse
+## 🛠️ Technologies
 
-Par défaut, l'application est configurée pour :
-- **IP**: 192.168.1.201
-- **Port**: 4370
+- React Native 0.72
+- SQLite (react-native-sqlite-storage)
+- React Navigation 6
+- Context API
 
-Pour modifier ces paramètres :
-1. Aller dans **Paramètres**
-2. Modifier l'adresse IP et le port
-3. Cliquer sur **Enregistrer**
+## 📄 Licence
 
-### Structure de la base de données
-
-L'application utilise SQLite avec les tables suivantes :
-- `users` - Utilisateurs
-- `fingerprints` - Empreintes digitales
-- `attendance` - Pointages
-- `departments` - Départements
-- `schedules` - Horaires
-- `holidays` - Jours fériés
-- `settings` - Paramètres
-- `logs` - Journal des événements
-
-## 📖 Guide d'utilisation
-
-### Première utilisation
-
-1. **Configurer la connexion**
-   - Aller dans Paramètres
-   - Vérifier l'adresse IP de la pointeuse
-   - Cliquer sur "Connecter" dans le panneau latéral
-
-2. **Synchroniser les utilisateurs**
-   - Aller dans Utilisateurs
-   - Cliquer sur "Synchroniser depuis le périphérique"
-
-3. **Télécharger les pointages**
-   - Aller dans Pointages
-   - Cliquer sur "Télécharger depuis le périphérique"
-
-### Gestion quotidienne
-
-1. **Connecter la pointeuse** au démarrage
-2. **Télécharger les pointages** du jour
-3. **Consulter les rapports** pour vérifier les présences
-
-### Export des données
-
-1. **Exporter les pointages**
-   - Aller dans Pointages
-   - Définir la période
-   - Cliquer sur "Exporter Excel"
-
-2. **Générer un rapport**
-   - Aller dans Rapports
-   - Sélectionner le type de rapport
-   - Exporter en Excel ou PDF
-
-## 🔐 Sécurité
-
-### Améliorations de sécurité v1.1.0
-
-- **Hachage des mots de passe**: Utilisation de bcrypt avec 12 rounds pour un hachage sécurisé
-- **Validation des entrées**: Protection contre les injections SQL et validation des données
-- **Logging structuré**: Traçabilité complète des opérations avec rotation des logs
-- **Détection d'injection**: Analyse automatique des entrées suspectes
-
-### Modules de sécurité
-
-#### PasswordManager
-```python
-from utils.security import PasswordManager
-
-# Hacher un mot de passe
-hashed = PasswordManager.hash_password("mon_mot_de_passe")
-
-# Vérifier un mot de passe
-is_valid = PasswordManager.verify_password("mon_mot_de_passe", hashed)
-```
-
-#### InputValidator
-```python
-from utils.security import InputValidator
-
-# Valider une adresse IP
-is_valid, error = InputValidator.validate_ip("192.168.1.201")
-
-# Valider un port
-is_valid, error = InputValidator.validate_port(4370)
-
-# Détecter une injection SQL
-is_safe, pattern = InputValidator.detect_sql_injection(user_input)
-```
-
-### Configuration des logs
-```python
-from utils.logger import init_logging, get_logger
-
-# Initialiser le logging
-init_logging(log_dir="~/.zkteco_manager/logs", level=logging.INFO)
-
-# Obtenir un logger
-logger = get_logger("mon_module")
-logger.info("Opération réussie")
-```
-
-## 📁 Structure du projet
-
-```
-zkteco-iclock-manager/
-├── main.py                 # Point d'entrée
-├── requirements.txt        # Dépendances Python
-├── build_exe.py           # Script de compilation
-├── build.bat              # Script Windows
-├── zkteco_manager.spec    # Configuration PyInstaller
-├── database/
-│   ├── __init__.py
-│   └── db_manager.py      # Gestionnaire SQLite
-├── zk/
-│   ├── __init__.py
-│   ├── zk_device.py       # Communication pointeuse
-│   └── zk_protocol.py     # Protocole ZK
-├── ui/
-│   ├── __init__.py
-│   ├── main_window.py     # Fenêtre principale
-│   ├── dialogs.py         # Dialogues
-│   └── styles.py          # Styles Qt
-├── utils/
-│   ├── __init__.py
-│   ├── export.py          # Export Excel/PDF
-│   ├── helpers.py         # Fonctions utilitaires
-│   ├── security.py        # Sécurité et hachage (NEW)
-│   └── logger.py          # Logging structuré (NEW)
-├── tests/
-│   ├── __init__.py
-│   └── test_security.py   # Tests unitaires (NEW)
-└── resources/
-    └── icon.ico           # Icône de l'application
-```
-
-## 🛠️ Dépannage
-
-### La connexion échoue
-
-1. Vérifier que la pointeuse est allumée
-2. Vérifier l'adresse IP dans les paramètres
-3. Vérifier que le port 4370 est ouvert
-4. Essayer de pinger la pointeuse : `ping 192.168.1.201`
-
-### Les pointages ne se téléchargent pas
-
-1. Vérifier la connexion
-2. Essayer de se reconnecter
-3. Vérifier les logs dans la base de données
-
-### L'application ne démarre pas
-
-1. Vérifier que Python 3.8+ est installé
-2. Réinstaller les dépendances : `pip install -r requirements.txt`
-3. Vérifier les logs d'erreur
-
-## 📞 Support
-
-Pour toute question ou problème :
-1. Consulter ce README
-2. Vérifier les logs de l'application
-3. Contacter le support technique
-
-## 📜 Licence
-
-Ce projet est sous licence MIT.
-
----
-
-**Version**: 1.1.0
-**Auteur**: ZKTeco Manager Team
-**Dernière mise à jour**: 2025
+MIT
